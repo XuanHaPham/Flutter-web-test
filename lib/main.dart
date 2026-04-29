@@ -1,5 +1,7 @@
 import 'dart:html';
 
+import 'package:flutter/semantics.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -30,64 +32,115 @@ class MyApp extends StatelessWidget {
             child: const Text('Accessible Web UI'),
           ),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Semantics(
-                label: 'Header text',
-                child: const Text(
-                  'Welcome to the Web UI',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                label: 'Description text',
-                child: const Text(
-                  'This UI demonstrates how to use the Semantics widget for accessibility.',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                label: 'Submit button',
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Do something when pressed
-                  },
-                  child: const Text('Submit'),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                label: 'Text input field',
-                child: const TextField(
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Enter your name',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                label: 'Dropdown menu for selecting an option',
-                child: DropdownButton<String>(
-                  value: 'Option 1',
-                  onChanged: (String? newValue) {},
-                  items: <String>['Option 1', 'Option 2', 'Option 3']
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
+        body: const MyHomePage(),
+      ),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final TextEditingController _urlController = TextEditingController();
+  String _resultMessage = ''; // Variable to store result message
+
+  Future<void> _submitUrl() async {
+    String url = _urlController.text;
+    setState(() {
+      _resultMessage = 'Submitting...'; // Show loading message
+    });
+
+    try {
+      final uri = Uri.parse(url);
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _resultMessage = 'Success: ${response.statusCode}'; // Success message
+        });
+      } else {
+        setState(() {
+          _resultMessage = 'Failed: ${response.statusCode}'; // Failure message
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _resultMessage = 'Error: $e'; // Error message
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const labelStr =
+        '2 text Header text Header text Header text Header text Header text Header text Header text Header text Header text Header text';
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            label: labelStr,
+            // attributedLabel: AttributedString(
+            //   labelStr,
+            //   attributes: [
+            //     LocaleStringAttribute(
+            //         range: TextRange(start: 0, end: labelStr.length),
+            //         locale: Locale('en', 'US'))
+            //   ],
+            // ),
+            button: true,
+            child: const Text(
+              'Welcome to the Web UI',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
           ),
-        ),
+          const SizedBox(height: 20),
+          Semantics(
+            label: 'Description text',
+            child: const Text(
+              'This UI demonstrates how to use the Semantics widget for accessibility.',
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Semantics(
+            label: 'Text input field',
+            child: TextField(
+              controller: _urlController,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Enter your URL',
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Semantics(
+            label: 'Submit button',
+            child: ElevatedButton(
+              onPressed: _submitUrl,
+              child: const Text('Submit'),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Semantics(
+            label: 'Result message',
+            child: Text(
+              _resultMessage, // Display the result message here
+              style: const TextStyle(fontSize: 16, color: Colors.blue),
+            ),
+          ),
+        ],
       ),
     );
   }
